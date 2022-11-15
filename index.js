@@ -6,6 +6,9 @@ var running = false;
 
 var c = document.getElementsByTagName('canvas')[0];
 var ctx = c.getContext('2d');
+ctx.canvas.width  = window.innerWidth;
+ctx.canvas.height = window.innerHeight;
+
 var intervalId;
 
 var boids = [];
@@ -43,4 +46,10 @@ document.addEventListener('keydown', (event) => {
 
         console.log("Stopped running");
     }
+});
+
+//TODO: fix blanking out of canvas when resizing
+window.addEventListener('resize', () => {
+    ctx.canvas.width  = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
 });

@@ -8,10 +8,9 @@ class Boid {
     color;
     size = 7;
     
-    //TODO: make this dynamic based on canvas size
     //TODO: change to random speed
-    constructor(x = rand(this.size, 800 - this.size),
-                y = rand(this.size, 800 - this.size),
+    constructor(x = rand(this.size, window.innerWidth - this.size),
+                y = rand(this.size, window.innerHeight - this.size),
                 speed = 7,
                 heading = rand(0, 2 * Math.PI),
                 color = "rgb(" + rand(0, 256) + "," + rand(0, 256) + "," + rand(0, 256) + ")") {
@@ -36,6 +35,14 @@ class Boid {
         ctx.stroke();
     }
 
+    outOfBoundsX(n) {
+        return (n < this.size || n > window.innerWidth - this.size);
+    }
+
+    outOfBoundsY(n) {
+        return (n < this.size || n > window.innerHeight - this.size);
+    }
+
     distance(boid) {
         return Math.sqrt(Math.pow(this.x - boid.x, 2) + Math.pow(this.y - boid.y, 2));
     }
@@ -47,7 +54,6 @@ class Boid {
             if (boid == this) {
                 continue;
             }
-
             if (this.distance(boid) < 100) { //TODO: make this dynamic based on boid detection range
                 neighbors.push(boid);
             }
@@ -66,11 +72,6 @@ class Boid {
         }
 
         return Math.atan2(sumY, sumX);
-    }
-
-    //TODO: make this dynamic based on canvas size
-    outOfBounds(n) {
-        return (n < this.size || n > 800 - this.size);
     }
 
     //TODO: rename appropriately
@@ -147,13 +148,13 @@ class Boid {
         this.x += this.speed * vx;
         this.y += this.speed * vy;
 
-        if (this.outOfBounds(this.x)) {
+        if (this.outOfBoundsX(this.x)) {
             this.heading = reflectX(this.heading);
-            this.x = Math.max(0, Math.min(800 - this.size, this.x));
+            this.x = Math.max(0, Math.min(window.innerWidth - this.size, this.x));
         }
-        if (this.outOfBounds(this.y)) {
+        if (this.outOfBoundsY(this.y)) {
             this.heading = reflectY(this.heading);
-            this.y = Math.max(0, Math.min(800 - this.size, this.y));
+            this.y = Math.max(0, Math.min(window.innerHeight - this.size, this.y));
         }
     }
 }
