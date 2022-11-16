@@ -7,6 +7,7 @@ class Boid {
     heading;
     color;
     eyesight;
+    neighbors;
     size = 7;
     
     //TODO: change to random speed
@@ -51,26 +52,24 @@ class Boid {
     }
 
     getNeighbors(boids) {
-        let neighbors = [];
+        this.neighbors = []
 
         for (let boid of boids) {
             if (boid == this) {
                 continue;
             }
             if (this.distance(boid) < this.eyesight) {
-                neighbors.push(boid);
+                this.neighbors.push(boid);
             }
         }
-
-        return neighbors;
     }
 
     //Average Heading Of Neighbors (AHON)
-    ahon(neighbors) {
+    ahon() {
         let sumX = 0, sumY = 0;
 
         //sum x and y components of neighbors' headings and scale inversely to distance
-        for (let boid of neighbors) {
+        for (let boid of this.neighbors) {
             sumX += (Math.cos(boid.heading)) / this.distance(boid);
             sumY += (Math.sin(boid.heading)) / this.distance(boid);
         }
@@ -79,17 +78,17 @@ class Boid {
     }
 
     //Average Position Of Neighbors (APON)
-    apon(neighbors, sensitivity) {
+    apon(sensitivity) {
         let sumX = 0, sumY = 0;
 
         //sum x and y components of neighbors' relative positions and scale inversely to distance
-        for (let boid of neighbors) {
+        for (let boid of this.neighbors) {
             sumX += (boid.x - this.x) / Math.pow(this.distance(boid), sensitivity);
             sumY += (boid.y - this.y) / Math.pow(this.distance(boid), sensitivity);
         }
 
-        sumX /= neighbors.length;
-        sumY /= neighbors.length;
+        sumX /= this.neighbors.length;
+        sumY /= this.neighbors.length;
 
         return [sumX, sumY]
     }        
@@ -97,63 +96,37 @@ class Boid {
     render(ctx, boids) {
         ctx.fillStyle = this.color;
         this.drawBody(ctx);
+    }
 
-        let neighbors = this.getNeighbors(boids);
+    update(ctx, boids) {
+        this.getNeighbors(boids);
 
-        if (neighbors.length > 0) {
+        let alignment_correction = 0;
+        let separation_correction = 0;
+        let cohesion_correction = 0;
+        let wall_correction = 0;
+
+        if (this.neighbors.length > 0) {
             //calculate direction to move if you want to be aligned, separated, and cohesed
-            let aligned = this.ahon(neighbors);
-            let [x_apon, y_apon] = this.apon(neighbors, 2); //more sensitive to distance for separation
+            let aligned = this.ahon();
+            let [x_apon, y_apon] = this.apon(2); //more sensitive to distance for separation
             let separated = Math.atan2(-1 * y_apon, -1 * x_apon);
-            [x_apon, y_apon] = this.apon(neighbors, 1); //less sensitive to distance for cohesion
+            [x_apon, y_apon] = this.apon(1); //less sensitive to distance for cohesion
             let cohesed = Math.atan2(y_apon, x_apon);
 
             //calculate angle between current heading and the desired direction (alignment, separation, cohesion)
-            let alignment_correction = angleBetween(this.heading, aligned);
-            let separation_correction = angleBetween(this.heading, separated);
-            let cohesion_correction = angleBetween(this.heading, cohesed);
+            alignment_correction = angleBetween(this.heading, aligned);
+            separation_correction = angleBetween(this.heading, separated);
+            cohesion_correction = angleBetween(this.heading, cohesed);
 
-            let total_correction = 0.1 * alignment_correction
-                                 + 0.005 * separation_correction
-                                 + 0.005 * cohesion_correction;
-
-            this.heading += total_correction;
-
-            // ctx.moveTo(this.x, this.y);
-            // ctx.lineTo(this.x + 50 * Math.cos(cohesed), this.y + 50 * Math.sin(cohesed));
+            // ctx.moveTo(this.x, this.y)
+            // ctx.lineTo(this.x + 100 * Math.cos(cohesed), this.y + 100 * Math.sin(cohesed));
             // ctx.stroke();
         }
 
-        let vx = Math.cos(this.heading);
-        let vy = Math.sin(this.heading);
-
-        //deflection amount
-        // let d = 0.1
-
-        // ctx.fillRect(this.x, this.y + (200 * vy), 5, 5);
-        // ctx.fillRect(this.x + (200 * vx), this.y, 5, 5);
-
-        // if (this.outOfBounds(this.x + (200 * vx))) {
-        //     if (vy != 0) {
-        //         this.heading += d * Math.sign(vy * vx);
-        //     } else {
-        //         this.heading += (rand(0, 1) == 0) ? 0.5 : -0.5;
-        //     }
-        // }
-        // if (this.outOfBounds(this.y + (200 * vy))) {
-        //     if (vx != 0) {
-        //         console.log(Math.sign(vy * vx))
-        //         this.heading -= d * Math.sign(vy * vx);
-        //     } else {
-        //         this.heading += (rand(0, 1) == 0) ? 0.5 : -0.5;
-        //     }
-        // }
-
-        // vx = Math.cos(this.heading);
-        // vy = Math.sin(this.heading);
-
-        this.x += this.speed * vx;
-        this.y += this.speed * vy;
+        this.heading += 0.1 * alignment_correction
+                      + 0.005 * separation_correction
+                      + 0.005 * cohesion_correction
 
         if (this.outOfBoundsX(this.x)) {
             this.heading = reflectX(this.heading);
@@ -163,7 +136,12 @@ class Boid {
             this.heading = reflectY(this.heading);
             this.y = Math.max(this.size, Math.min(window.innerHeight - this.size, this.y));
         }
+
+        //move in direction of newly computed heading
+        this.x += this.speed * Math.cos(this.heading);
+        this.y += this.speed * Math.sin(this.heading);
     }
+
 }
 
 export { Boid };

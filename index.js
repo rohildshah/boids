@@ -22,11 +22,12 @@ for (let i = 0; i < 20; i++) {
 // boids.push(new Boid(150, 650, 7, 1));
 // boids.push(new Boid(150, 150, 7, -1));
 
-function render() {
+function main() {
     ctx.clearRect(0, 0, c.width, c.height);
 
     for (var boid of boids) {
         boid.render(ctx, boids);
+        boid.update(ctx, boids);
     }
 
     console.log("ran");
@@ -35,7 +36,7 @@ function render() {
 document.addEventListener('keydown', (event) => {
     if (event.key === 's' && !running) {
         intervalId = setInterval(() => {
-            render();
+            main();
         }, 1000 / FPS);
         running = true;
 
