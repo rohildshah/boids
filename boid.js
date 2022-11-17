@@ -52,14 +52,15 @@ class Boid {
     }
 
     calc_separation(neighbors) {
+        neighbors = neighbors.filter(boid => this.distance(boid) < 20);
         if (neighbors.length == 0) { return new Vector(0, 0); }
 
         let sum = new Vector(0, 0);
 
         for (let boid of neighbors) {
-            sum = sum.subtract(new Vector(boid.x - this.x, boid.y - this.y));
+            sum = sum.subtract((new Vector(boid.x - this.x, boid.y - this.y)).divide(Math.pow(this.distance(boid), 1)));
         }
-        return sum.divide(100);
+        return sum.divide(1);
     }
 
     calc_cohesion(neighbors) {
@@ -72,6 +73,12 @@ class Boid {
         }
 
         return sum.divide(neighbors.length).subtract(new Vector(this.x, this.y)).divide(100);
+    }
+
+    calc_speed() {
+        if (this.velocity.magnitude() > 10) {
+            this.velocity = this.velocity.resize(10);
+        }
     }
 
     calc_wall() {
@@ -109,13 +116,12 @@ class Boid {
     update(ctx, boids) {
         let neighbors = this.getNeighbors(boids);
 
-        //TODO: implement all other corrections and make sure they dont look like complete garbage
         let alignment_correction = this.calc_alignment(neighbors);
         let separation_correction = this.calc_separation(neighbors);
         let cohesion_correction = this.calc_cohesion(neighbors);
+        this.calc_speed();
         let wall_correction = this.calc_wall();
 
-        //TODO: i dont like that i have to do an addvector for every correction so try to fix that
         this.velocity = this.velocity.add(wall_correction,
                                           alignment_correction,
                                           separation_correction,

@@ -14,14 +14,9 @@ var intervalId;
 
 var boids = [];
 
-for (let i = 0; i < 20; i++) {
+for (let i = 0; i < 200; i++) {
     boids.push(new Boid());
 }
-
-// boids.push(new Boid(700, 400, 7, 0.1));
-// boids.push(new Boid(65, 385, 7, 2.1));
-// boids.push(new Boid(150, 650, 7, 1));
-// boids.push(new Boid(150, 150, 7, -1));
 
 function main() {
     ctx.clearRect(0, 0, c.width, c.height);
