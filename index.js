@@ -1,6 +1,4 @@
 import { Boid } from './boid.js';
-import { Vector } from './vector.js';
-import { rand } from './utility.js';
 
 const FPS = 20;
 var running = false;
@@ -23,7 +21,7 @@ function main() {
 
     for (var boid of boids) {
         boid.render(ctx);
-        boid.update(ctx, boids);
+        boid.update(boids);
     }
 
     console.log("ran");
