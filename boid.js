@@ -1,42 +1,22 @@
-import { rand, positiveAngle, angleBetween, reflectX, reflectY } from './utility.js';
+//TODO: clean up these imports
+import { rand, randDir, positiveAngle, angleBetween, reflectX, reflectY, addVector, divideVector, rotateVector, subVector, multVector } from './utility.js';
+import { Vector } from './vector.js';
 
 class Boid {
     x;
     y;
-    speed;
-    heading;
-    color;
+    velocity;
     eyesight;
-    neighbors;
     size = 7;
     
-    //TODO: change to random speed
     constructor(x = rand(this.size, window.innerWidth - this.size),
                 y = rand(this.size, window.innerHeight - this.size),
-                speed = 7,
-                heading = rand(0, 2 * Math.PI),
-                color = "rgb(" + rand(0, 256) + "," + rand(0, 256) + "," + rand(0, 256) + ")",
+                velocity = new Vector(rand(-50, 50), rand(-50, 50)),
                 eyesight = 100) {
         this.x = x;
         this.y = y;
-        this.speed = speed;
-        this.heading = heading;
-        this.color = color;
+        this.velocity = velocity.resize(rand(6, 8));
         this.eyesight = eyesight;
-    }
-
-    drawBody(ctx) {
-        let headAngle = [Math.cos(this.heading), Math.sin(this.heading)];
-        let leftWingAngle = [Math.cos(this.heading + (3 * Math.PI / 4)), Math.sin(this.heading + (3 * Math.PI / 4))];
-        let rightWingAngle = [Math.cos(this.heading - (3 * Math.PI / 4)), Math.sin(this.heading - (3 * Math.PI / 4))];
-
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + this.size * leftWingAngle[0], this.y + this.size * leftWingAngle[1]);
-        ctx.lineTo(this.x + this.size * headAngle[0], this.y + this.size * headAngle[1]);
-        ctx.lineTo(this.x + this.size * rightWingAngle[0], this.y + this.size * rightWingAngle[1]);
-        ctx.closePath();
-        ctx.stroke();
     }
 
     outOfBoundsX(n) {
@@ -52,94 +32,161 @@ class Boid {
     }
 
     getNeighbors(boids) {
-        this.neighbors = []
+        let neighbors = []
 
         for (let boid of boids) {
             if (boid == this) {
                 continue;
             }
             if (this.distance(boid) < this.eyesight) {
-                this.neighbors.push(boid);
+                neighbors.push(boid);
             }
         }
+
+        return neighbors
     }
 
-    //Average Heading Of Neighbors (AHON)
-    ahon() {
-        let sumX = 0, sumY = 0;
+    
+    calc_alignment(neighbors) {
+        if (neighbors.length == 0) { return new Vector(0, 0); }
 
-        //sum x and y components of neighbors' headings and scale inversely to distance
-        for (let boid of this.neighbors) {
-            sumX += (Math.cos(boid.heading)) / this.distance(boid);
-            sumY += (Math.sin(boid.heading)) / this.distance(boid);
+        let sum = new Vector(0, 0);
+
+        for (let boid of neighbors) {
+            sum = addVector(sum, boid.velocity)
         }
 
-        return Math.atan2(sumY, sumX);
+        //TODO: this is the most disgusting line of code i have written so please fix it
+        return divideVector(subVector(divideVector(sum, neighbors.length), this.velocity), 8);
     }
 
     //Average Position Of Neighbors (APON)
-    apon(sensitivity) {
+    // apon(sensitivity) {
+    //     let sumX = 0, sumY = 0;
+
+    //     //sum x and y components of neighbors' relative positions and scale inversely to distance
+    //     for (let boid of this.neighbors) {
+    //         sumX += (boid.x - this.x) / Math.pow(this.distance(boid), sensitivity);
+    //         sumY += (boid.y - this.y) / Math.pow(this.distance(boid), sensitivity);
+    //     }
+
+    //     sumX /= this.neighbors.length;
+    //     sumY /= this.neighbors.length;
+
+    //     return [sumX, sumY]
+    // }
+
+    calc_separation() {
+        if (this.neighbors.length == 0) { return 0; }
+
         let sumX = 0, sumY = 0;
 
-        //sum x and y components of neighbors' relative positions and scale inversely to distance
         for (let boid of this.neighbors) {
-            sumX += (boid.x - this.x) / Math.pow(this.distance(boid), sensitivity);
-            sumY += (boid.y - this.y) / Math.pow(this.distance(boid), sensitivity);
+            sumX -= (boid.x - this.x) / Math.pow(this.distance(boid), 2);
+            sumY -= (boid.y - this.y) / Math.pow(this.distance(boid), 2);
         }
 
-        sumX /= this.neighbors.length;
-        sumY /= this.neighbors.length;
+        //Average Distance Of Neighbors (ADON)
+        let adon = Math.atan2(sumY, sumX);
+        return angleBetween(this.heading, adon);
+    }
 
-        return [sumX, sumY]
-    }        
+    calc_cohesion() {
+        if (this.neighbors.length == 0) { return 0; }
 
-    render(ctx, boids) {
-        ctx.fillStyle = this.color;
-        this.drawBody(ctx);
+        let sumX = 0, sumY = 0;
+
+        for (let boid of this.neighbors) {
+            sumX += boid.x / Math.pow(this.distance(boid), 2);
+            sumY += boid.y / Math.pow(this.distance(boid), 2);
+        }
+
+        //Average Position Of Neighbors (APON)
+        let apon = Math.atan2(sumY / this.neighbors.length, sumX / this.neighbors.length);
+        return angleBetween(this.heading, apon);
+    }
+
+    calc_wall() {
+        let v = new Vector(0, 0);
+
+        if (this.x < this.size) {
+            v.x = 1;
+        } else if (this.x > window.innerWidth - this.size) {
+            v.x = -1;
+        }
+        if (this.y < this.size) {
+            v.y = 1;
+        } else if (this.y > window.innerHeight - this.size) {
+            v.y = -1;
+        }
+
+        return v;
+    }
+
+    render(ctx) {
+        //init the directions for the wings
+        let leftWingVector = rotateVector(this.velocity, 3 * Math.PI / 4);
+        let rightWingVector = rotateVector(this.velocity, -3 * Math.PI / 4);
+
+        //draw the triangular shaped body
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x + leftWingVector.getX(this.size), this.y + leftWingVector.getY(this.size));
+        ctx.lineTo(this.x + this.velocity.getX(this.size), this.y + this.velocity.getY(this.size));
+        ctx.lineTo(this.x + rightWingVector.getX(this.size), this.y + rightWingVector.getY(this.size));
+        ctx.closePath();
+        ctx.stroke();
     }
 
     update(ctx, boids) {
-        this.getNeighbors(boids);
+        let neighbors = this.getNeighbors(boids);
 
-        let alignment_correction = 0;
-        let separation_correction = 0;
-        let cohesion_correction = 0;
-        let wall_correction = 0;
+        //TODO: implement all other corrections and make sure they dont look like complete garbage
+        let alignment_correction = this.calc_alignment(neighbors);
+        // let separation_correction = this.calc_separation();
+        // let cohesion_correction = this.calc_cohesion();
+        let wall_correction = this.calc_wall();
 
-        if (this.neighbors.length > 0) {
-            //calculate direction to move if you want to be aligned, separated, and cohesed
-            let aligned = this.ahon();
-            let [x_apon, y_apon] = this.apon(2); //more sensitive to distance for separation
-            let separated = Math.atan2(-1 * y_apon, -1 * x_apon);
-            [x_apon, y_apon] = this.apon(1); //less sensitive to distance for cohesion
-            let cohesed = Math.atan2(y_apon, x_apon);
+        // if (this.neighbors.length > 0) {
+        //     //calculate direction to move if you want to be aligned, separated, and cohesed
+        //     let aligned = this.ahon();
+        //     let [x_apon, y_apon] = this.apon(2); //more sensitive to distance for separation
+        //     let separated = Math.atan2(-1 * y_apon, -1 * x_apon);
+        //     [x_apon, y_apon] = this.apon(1); //less sensitive to distance for cohesion
+        //     let cohesed = Math.atan2(y_apon, x_apon);
 
-            //calculate angle between current heading and the desired direction (alignment, separation, cohesion)
-            alignment_correction = angleBetween(this.heading, aligned);
-            separation_correction = angleBetween(this.heading, separated);
-            cohesion_correction = angleBetween(this.heading, cohesed);
+        //     //calculate angle between current heading and the desired direction (alignment, separation, cohesion)
+        //     alignment_correction = angleBetween(this.heading, aligned);
+        //     separation_correction = angleBetween(this.heading, separated);
+        //     cohesion_correction = angleBetween(this.heading, cohesed);
 
-            // ctx.moveTo(this.x, this.y)
-            // ctx.lineTo(this.x + 100 * Math.cos(cohesed), this.y + 100 * Math.sin(cohesed));
-            // ctx.stroke();
-        }
+        // }
 
-        this.heading += 0.1 * alignment_correction
-                      + 0.005 * separation_correction
-                      + 0.005 * cohesion_correction
+        // this.heading += 0.125 * alignment_correction
+        //               + 0.01 * separation_correction
+        //               + 0.01 * cohesion_correction
+                    //   + 0.1 * wall_correction;
+        
+        // ctx.moveTo(this.x, this.y)
+        // ctx.lineTo(this.x + 100 * Math.cos(separation_correction), this.y + 100 * Math.sin(separation_correction));
+        // ctx.stroke();
 
-        if (this.outOfBoundsX(this.x)) {
-            this.heading = reflectX(this.heading);
-            this.x = Math.max(this.size, Math.min(window.innerWidth - this.size, this.x));
-        }
-        if (this.outOfBoundsY(this.y)) {
-            this.heading = reflectY(this.heading);
-            this.y = Math.max(this.size, Math.min(window.innerHeight - this.size, this.y));
-        }
+        // if (this.outOfBoundsX(this.x)) {
+        //     this.heading = reflectX(this.heading);
+        //     this.x = Math.max(this.size, Math.min(window.innerWidth - this.size, this.x));
+        // }
+        // if (this.outOfBoundsY(this.y)) {
+        //     this.heading = reflectY(this.heading);
+        //     this.y = Math.max(this.size, Math.min(window.innerHeight - this.size, this.y));
+        // }
 
-        //move in direction of newly computed heading
-        this.x += this.speed * Math.cos(this.heading);
-        this.y += this.speed * Math.sin(this.heading);
+        //TODO: i dont like that i have to do an addvector for every correction so try to fix that
+        this.velocity = addVector(this.velocity, alignment_correction);
+        this.velocity = addVector(this.velocity, wall_correction);
+
+        //move in direction of newly computed velocity
+        this.x += this.velocity.getX();
+        this.y += this.velocity.getY();
     }
 
 }
