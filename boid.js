@@ -104,8 +104,6 @@ class Boid {
         }
     }
 
-    
-
     //draw boid shape to context param ctx
     render(ctx) {
         //init the directions for body vertices
@@ -125,25 +123,31 @@ class Boid {
 
     //recalculate boid velocity depending on rules
     //update position based on new velocity
-    update(boids) {
+    update(boids, state) {
         let neighbors = this.getNeighbors(boids);
 
         //compute all correction vectors and scale them by arbitrary weights
         let wall_vector = this.wall();
-        let alignment_vector = this.alignment(neighbors).divide(8);
-        let separation_vector = this.separation(neighbors).divide(1);
-        let cohesion_vector = this.cohesion(neighbors).divide(100);
-        let goal_vector = this.goal(window.innerWidth / 2, window.innerHeight / 2).divide(500);
-        this.limitVelocity(10);
+        let alignment_vector = (state["align"]) ?
+            this.alignment(neighbors).divide(state["alignment_factor"]) :
+            new Vector(0, 0);
+        let separation_vector = (state["separate"]) ?
+            this.separation(neighbors).divide(state["separation_factor"]) :
+            new Vector(0, 0);
+        let cohesion_vector = (state["cohese"]) ?
+            this.cohesion(neighbors).divide(state["cohesion_factor"]) :
+            new Vector(0, 0);
+        let goal_vector = (state["goal"]) ?
+            this.goal(state["goal_x"], state["goal_y"]).divide(state["goal_factor"]) :
+            new Vector(0, 0);
+        this.limitVelocity(state["max_speed"]);
 
-        
         //add all correction vectors to velocity
         this.velocity = this.velocity.add(wall_vector,
                                           alignment_vector,
                                           separation_vector,
                                           cohesion_vector,
                                           goal_vector);
-        
 
         //move in direction of newly computed velocity
         this.x += this.velocity.x;
