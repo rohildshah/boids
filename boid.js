@@ -1,4 +1,3 @@
-//TODO: clean up these imports
 import { rand } from './utility.js';
 import { Vector } from './vector.js';
 
