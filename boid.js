@@ -92,12 +92,19 @@ class Boid {
         return sum.divide(neighbors.length).subtract(new Vector(this.x, this.y));
     }
 
+    //return relative position to param x, y of a goal
+    goal(x, y) {
+        return new Vector(x - this.x, y - this.y);
+    }
+
     //limit velocity magnitude to param speed
-    limitSpeed(speed) {
+    limitVelocity(speed) {
         if (this.velocity.magnitude() > speed) {
             this.velocity = this.velocity.resize(speed);
         }
     }
+
+    
 
     //draw boid shape to context param ctx
     render(ctx) {
@@ -126,13 +133,17 @@ class Boid {
         let alignment_vector = this.alignment(neighbors).divide(8);
         let separation_vector = this.separation(neighbors).divide(1);
         let cohesion_vector = this.cohesion(neighbors).divide(100);
-        this.limitSpeed(10);
+        let goal_vector = this.goal(window.innerWidth / 2, window.innerHeight / 2).divide(500);
+        this.limitVelocity(10);
+
         
         //add all correction vectors to velocity
         this.velocity = this.velocity.add(wall_vector,
                                           alignment_vector,
                                           separation_vector,
-                                          cohesion_vector);
+                                          cohesion_vector,
+                                          goal_vector);
+        
 
         //move in direction of newly computed velocity
         this.x += this.velocity.x;
