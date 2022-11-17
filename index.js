@@ -51,3 +51,10 @@ window.addEventListener('resize', () => {
     ctx.canvas.width  = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
 });
+
+intervalId = setInterval(() => {
+    main();
+}, 1000 / FPS);
+running = true;
+
+console.log("Started running");
