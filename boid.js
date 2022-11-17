@@ -1,5 +1,5 @@
 //TODO: clean up these imports
-import { rand, randDir, positiveAngle, angleBetween, reflectX, reflectY, addVector, divideVector, rotateVector, subVector, multVector } from './utility.js';
+import { rand, rotateVector } from './utility.js';
 import { Vector } from './vector.js';
 
 class Boid {
@@ -19,14 +19,6 @@ class Boid {
         this.eyesight = eyesight;
     }
 
-    outOfBoundsX(n) {
-        return (n < this.size || n > window.innerWidth - this.size);
-    }
-
-    outOfBoundsY(n) {
-        return (n < this.size || n > window.innerHeight - this.size);
-    }
-
     distance(boid) {
         return Math.sqrt(Math.pow(this.x - boid.x, 2) + Math.pow(this.y - boid.y, 2));
     }
@@ -43,7 +35,7 @@ class Boid {
             }
         }
 
-        return neighbors
+        return neighbors;
     }
 
     
@@ -53,57 +45,33 @@ class Boid {
         let sum = new Vector(0, 0);
 
         for (let boid of neighbors) {
-            sum = addVector(sum, boid.velocity)
+            sum = sum.add(boid.velocity);
         }
 
-        //TODO: this is the most disgusting line of code i have written so please fix it
-        return divideVector(subVector(divideVector(sum, neighbors.length), this.velocity), 8);
+        return sum.divide(neighbors.length).subtract(this.velocity).divide(8);
     }
 
-    //Average Position Of Neighbors (APON)
-    // apon(sensitivity) {
-    //     let sumX = 0, sumY = 0;
+    calc_separation(neighbors) {
+        if (neighbors.length == 0) { return new Vector(0, 0); }
 
-    //     //sum x and y components of neighbors' relative positions and scale inversely to distance
-    //     for (let boid of this.neighbors) {
-    //         sumX += (boid.x - this.x) / Math.pow(this.distance(boid), sensitivity);
-    //         sumY += (boid.y - this.y) / Math.pow(this.distance(boid), sensitivity);
-    //     }
+        let sum = new Vector(0, 0);
 
-    //     sumX /= this.neighbors.length;
-    //     sumY /= this.neighbors.length;
-
-    //     return [sumX, sumY]
-    // }
-
-    calc_separation() {
-        if (this.neighbors.length == 0) { return 0; }
-
-        let sumX = 0, sumY = 0;
-
-        for (let boid of this.neighbors) {
-            sumX -= (boid.x - this.x) / Math.pow(this.distance(boid), 2);
-            sumY -= (boid.y - this.y) / Math.pow(this.distance(boid), 2);
+        for (let boid of neighbors) {
+            sum = sum.subtract(new Vector(boid.x - this.x, boid.y - this.y));
         }
-
-        //Average Distance Of Neighbors (ADON)
-        let adon = Math.atan2(sumY, sumX);
-        return angleBetween(this.heading, adon);
+        return sum.divide(100);
     }
 
-    calc_cohesion() {
-        if (this.neighbors.length == 0) { return 0; }
+    calc_cohesion(neighbors) {
+        if (neighbors.length == 0) { return new Vector(0, 0); }
 
-        let sumX = 0, sumY = 0;
+        let sum = new Vector(0, 0);
 
-        for (let boid of this.neighbors) {
-            sumX += boid.x / Math.pow(this.distance(boid), 2);
-            sumY += boid.y / Math.pow(this.distance(boid), 2);
+        for (let boid of neighbors) {
+            sum = sum.add(new Vector(boid.x, boid.y));
         }
 
-        //Average Position Of Neighbors (APON)
-        let apon = Math.atan2(sumY / this.neighbors.length, sumX / this.neighbors.length);
-        return angleBetween(this.heading, apon);
+        return sum.divide(neighbors.length).subtract(new Vector(this.x, this.y)).divide(100);
     }
 
     calc_wall() {
@@ -143,46 +111,15 @@ class Boid {
 
         //TODO: implement all other corrections and make sure they dont look like complete garbage
         let alignment_correction = this.calc_alignment(neighbors);
-        // let separation_correction = this.calc_separation();
-        // let cohesion_correction = this.calc_cohesion();
+        let separation_correction = this.calc_separation(neighbors);
+        let cohesion_correction = this.calc_cohesion(neighbors);
         let wall_correction = this.calc_wall();
 
-        // if (this.neighbors.length > 0) {
-        //     //calculate direction to move if you want to be aligned, separated, and cohesed
-        //     let aligned = this.ahon();
-        //     let [x_apon, y_apon] = this.apon(2); //more sensitive to distance for separation
-        //     let separated = Math.atan2(-1 * y_apon, -1 * x_apon);
-        //     [x_apon, y_apon] = this.apon(1); //less sensitive to distance for cohesion
-        //     let cohesed = Math.atan2(y_apon, x_apon);
-
-        //     //calculate angle between current heading and the desired direction (alignment, separation, cohesion)
-        //     alignment_correction = angleBetween(this.heading, aligned);
-        //     separation_correction = angleBetween(this.heading, separated);
-        //     cohesion_correction = angleBetween(this.heading, cohesed);
-
-        // }
-
-        // this.heading += 0.125 * alignment_correction
-        //               + 0.01 * separation_correction
-        //               + 0.01 * cohesion_correction
-                    //   + 0.1 * wall_correction;
-        
-        // ctx.moveTo(this.x, this.y)
-        // ctx.lineTo(this.x + 100 * Math.cos(separation_correction), this.y + 100 * Math.sin(separation_correction));
-        // ctx.stroke();
-
-        // if (this.outOfBoundsX(this.x)) {
-        //     this.heading = reflectX(this.heading);
-        //     this.x = Math.max(this.size, Math.min(window.innerWidth - this.size, this.x));
-        // }
-        // if (this.outOfBoundsY(this.y)) {
-        //     this.heading = reflectY(this.heading);
-        //     this.y = Math.max(this.size, Math.min(window.innerHeight - this.size, this.y));
-        // }
-
         //TODO: i dont like that i have to do an addvector for every correction so try to fix that
-        this.velocity = addVector(this.velocity, alignment_correction);
-        this.velocity = addVector(this.velocity, wall_correction);
+        this.velocity = this.velocity.add(wall_correction,
+                                          alignment_correction,
+                                          separation_correction,
+                                          cohesion_correction);
 
         //move in direction of newly computed velocity
         this.x += this.velocity.getX();

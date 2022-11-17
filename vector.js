@@ -1,6 +1,6 @@
 //TODO: rethink whether or not i want to have all these member functions
 
-import { positiveAngle, rand } from './utility.js';
+import { positiveAngle } from './utility.js';
 
 class Vector {
     x;
@@ -36,6 +36,28 @@ class Vector {
     resize(length) {
         return new Vector(length * this.x / this.magnitude()
                         , length * this.y / this.magnitude());
+    }
+
+    add() {
+        let sum = new Vector(this.x, this.y);
+        for (let v of arguments) {
+            sum = new Vector(sum.x + v.x, sum.y + v.y);
+        }
+
+        return sum;
+    }
+
+    subtract() {
+        let sum = new Vector(this.x, this.y);
+        for (let v of arguments) {
+            sum = new Vector(sum.x - v.x, sum.y - v.y);
+        }
+
+        return sum;
+    }
+
+    divide(scalar) {
+        return new Vector(this.x / scalar, this.y / scalar);
     }
 }
 
