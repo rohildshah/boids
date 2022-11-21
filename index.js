@@ -1,6 +1,6 @@
 import { Boid } from './boid.js';
 
-const FPS = 20;
+const FPS = 50;
 
 var c = document.getElementsByTagName('canvas')[0];
 var ctx = c.getContext('2d');
@@ -23,14 +23,16 @@ var state = {
     goal_x: window.innerHeight / 2,
     goal_y: window.innerWidth / 2,
     max_speed: 10,
+    num_boids: 200,
 };
 
-for (let i = 0; i < 200; i++) {
+for (let i = 0; i < state["num_boids"]; i++) {
     boids.push(new Boid());
 }
 
 function main() {
     ctx.clearRect(0, 0, c.width, c.height);
+    drawGrid();
 
     for (var boid of boids) {
         boid.render(ctx);
@@ -38,6 +40,22 @@ function main() {
     }
 
     console.log("ran");
+}
+
+function drawGrid() {
+    ctx.beginPath();
+    ctx.strokeStyle = "#dddddd";
+
+    for (let i = 0; i < c.width; i += 50) {
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, c.height);
+    }
+    for (let i = 0; i < c.height; i += 50) {
+        ctx.moveTo(0, i);
+        ctx.lineTo(c.width, i);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "#000000";
 }
 
 // document.getElementById('myRange').oninput = function() {
