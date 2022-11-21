@@ -6,6 +6,6 @@ Published on github pages at [rohilshah.github.io/boids](https://rohildshah.gith
 
 Uses JavaScript and HTML Canvas Graphics.
 
-## Images
+## Demonstration
 
 ![](https://rohildshah.github.io/boids/assets/)
