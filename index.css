@@ -13,9 +13,23 @@ html, body {
     width: 90vw;
     height: 50px;
 
+    display: flex;
+    justify-content: space-evenly;
+    
+    z-index: 1;
+}
+
+#controls > div {
     background: white;
     border: 1px solid black;
     border-radius: 5px;
+    padding: 10px;
 
-    z-index: 1;
+    font-family: Helvetica, sans-serif;
+    font-size: 15px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }

@@ -68,9 +68,20 @@ function drawGrid() {
     ctx.strokeStyle = "#000000";
 }
 
-// document.getElementById('myRange').oninput = function() {
-//     state["max_speed"] = this.value;
-// }
+document.getElementById('alignment').oninput = function() {
+    state["align"] = this.value != 1;
+    state["alignment_factor"] = 15 - 1.4 * this.value;
+}
+
+document.getElementById('separation').oninput = function() {
+    state["separate"] = this.value != 1;
+    state["separation_factor"] = 1.9 - 0.18 * this.value;
+}
+
+document.getElementById('cohesion').oninput = function() {
+    state["cohese"] = this.value != 1;
+    state["cohesion_factor"] = 199 - 19.8 * this.value;
+}
 
 document.addEventListener('keydown', (event) => {
     if (event.key === 's' && !running) {
@@ -87,7 +98,6 @@ document.addEventListener('keydown', (event) => {
         console.log("Stopped running");
     }
 });
-
 
 //TODO: fix blanking out of canvas when resizing
 window.addEventListener('resize', () => {
