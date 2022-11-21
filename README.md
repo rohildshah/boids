@@ -8,4 +8,4 @@ Uses JavaScript and HTML Canvas Graphics.
 
 ## Images
 
-![](https://github.com/rohildshah/boids/blob/test-readme-gif/assets/demo.gif)
+![](https://rohildshah.github.io/boids/assets/)
