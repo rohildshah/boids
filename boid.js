@@ -6,10 +6,9 @@ class Boid {
     y;
     velocity;
     eyesight = 100;
-    size = 7;
-    
-    constructor(x = rand(this.size, window.innerWidth - this.size),
-                y = rand(this.size, window.innerHeight - this.size),
+
+    constructor(x = rand(0, window.innerWidth),
+                y = rand(0, window.innerHeight),
                 velocity = (new Vector(rand(-50, 50), rand(-50, 50))).resize(rand(6, 8))) {
         this.x = x;
         this.y = y;
@@ -38,16 +37,17 @@ class Boid {
     //return vector in direction of nearest wall if out of bounds
     wall() {
         let v = new Vector(0, 0);
+        let edge_offset = 50;
 
-        if (this.x < this.size) {
-            v.x = 1;
-        } else if (this.x > window.innerWidth - this.size) {
-            v.x = -1;
+        if (this.x < edge_offset) {
+            v.x = 2;
+        } else if (this.x > window.innerWidth - edge_offset) {
+            v.x = -2;
         }
-        if (this.y < this.size) {
-            v.y = 1;
-        } else if (this.y > window.innerHeight - this.size) {
-            v.y = -1;
+        if (this.y < edge_offset) {
+            v.y = 2;
+        } else if (this.y > window.innerHeight - edge_offset) {
+            v.y = -2;
         }
 
         return v;
@@ -106,10 +106,12 @@ class Boid {
 
     //draw boid shape to context param ctx
     render(ctx) {
+        let size = 7;
+
         //init the directions for body vertices
-        let head = this.velocity.resize(this.size);
-        let left = this.velocity.rotate(3 * Math.PI / 4).resize(this.size);
-        let right = this.velocity.rotate(-3 * Math.PI / 4).resize(this.size);
+        let head = this.velocity.resize(size);
+        let left = this.velocity.rotate(3 * Math.PI / 4).resize(size);
+        let right = this.velocity.rotate(-3 * Math.PI / 4).resize(size);
 
         //draw the body to the context
         ctx.beginPath();

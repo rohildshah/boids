@@ -4,8 +4,9 @@ const FPS = 50;
 
 var c = document.getElementsByTagName('canvas')[0];
 var ctx = c.getContext('2d');
-ctx.canvas.width  = window.innerWidth;
-ctx.canvas.height = window.innerHeight;
+
+c.width  = window.innerWidth;
+c.height = window.innerHeight;
 
 var intervalId;
 var running = false;
@@ -46,14 +47,23 @@ function drawGrid() {
     ctx.beginPath();
     ctx.strokeStyle = "#dddddd";
 
-    for (let i = 0; i < c.width; i += 50) {
+    //halve excess space to center the grid
+    let grid_width = 50;
+    let horiz_offset = c.width % grid_width / 2;
+    let vert_offset = c.height % grid_width / 2;
+
+    //draw vertical lines
+    for (let i = horiz_offset; i < c.width; i += grid_width) {
         ctx.moveTo(i, 0);
         ctx.lineTo(i, c.height);
     }
-    for (let i = 0; i < c.height; i += 50) {
+
+    //draw horizontal lines
+    for (let i = vert_offset; i < c.height; i += grid_width) {
         ctx.moveTo(0, i);
         ctx.lineTo(c.width, i);
     }
+
     ctx.stroke();
     ctx.strokeStyle = "#000000";
 }
@@ -81,8 +91,8 @@ document.addEventListener('keydown', (event) => {
 
 //TODO: fix blanking out of canvas when resizing
 window.addEventListener('resize', () => {
-    ctx.canvas.width  = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
+    c.width  = window.innerWidth;
+    c.height = window.innerHeight;
 });
 
 intervalId = setInterval(() => {
