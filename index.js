@@ -20,9 +20,9 @@ var state = {
     cohese: true,
     cohesion_factor: 100,
     goal: false,
-    goal_factor: 500,
-    goal_x: window.innerHeight / 2,
-    goal_y: window.innerWidth / 2,
+    goal_factor: 100,
+    goal_x: window.innerWidth / 2,
+    goal_y: window.innerHeight / 2,
     max_speed: 10,
     num_boids: 200,
 };
@@ -48,7 +48,7 @@ function drawGrid() {
     ctx.strokeStyle = "#dddddd";
 
     //halve excess space to center the grid
-    let grid_width = 50;
+    let grid_width = 30;
     let horiz_offset = c.width % grid_width / 2;
     let vert_offset = c.height % grid_width / 2;
 
@@ -65,7 +65,6 @@ function drawGrid() {
     }
 
     ctx.stroke();
-    ctx.strokeStyle = "#000000";
 }
 
 document.getElementById('alignment').oninput = function() {
@@ -80,7 +79,22 @@ document.getElementById('separation').oninput = function() {
 
 document.getElementById('cohesion').oninput = function() {
     state["cohese"] = this.value != 1;
-    state["cohesion_factor"] = 199 - 19.8 * this.value;
+    state["cohesion_factor"] = 190 - 18 * this.value;
+}
+
+document.getElementById('speed').oninput = function() {
+    state["max_speed"] = 2 * this.value;
+}
+
+document.getElementById('number').oninput = function() {
+    state["num_boids"] = -49 + 50 * this.value;
+    while (boids.length != state["num_boids"]) {
+        if (boids.length < state["num_boids"]) {
+            boids.push(new Boid());
+        } else {
+            boids.pop();
+        }
+    }
 }
 
 document.addEventListener('keydown', (event) => {

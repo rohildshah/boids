@@ -114,6 +114,7 @@ class Boid {
         let right = this.velocity.rotate(-3 * Math.PI / 4).resize(size);
 
         //draw the body to the context
+        ctx.strokeStyle = "#000000";
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
         ctx.lineTo(this.x + left.x,   this.y + left.y);
