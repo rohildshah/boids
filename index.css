@@ -14,7 +14,7 @@ html, body {
     height: 50px;
 
     display: flex;
-    justify-content: space-evenly;
+    justify-content: flex-start;
     
     z-index: 1;
 }
@@ -24,6 +24,7 @@ html, body {
     border: 1px solid black;
     border-radius: 5px;
     padding: 10px;
+    margin: 0 15px;
 
     font-family: Helvetica, sans-serif;
     font-size: 15px;
@@ -32,4 +33,9 @@ html, body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+#controls > div > a {
+    margin: 3px 0 0 0;
+    color: #0275FF;
 }
